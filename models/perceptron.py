@@ -29,12 +29,12 @@ class Perceptron:
             y_train: a numpy array of shape (N,) containing training labels
         """
         # TODO: implement me
-        
+        X_train = np.hstack((np.ones((X_train.shape[0], 1)), X_train))
         self.w = np.random.random((self.n_class, X_train.shape[1]))
 
         for epoch in range(self.epochs):
             if epoch % 2 == 0:
-                self.lr /= 3
+                self.lr /= 10
             for index in range(len(X_train)):
                 label = y_train[index]
                 data = X_train[index, :]
@@ -71,9 +71,11 @@ class Perceptron:
                 class.
         """
         # TODO: implement me
+        X_test = np.hstack((np.ones((X_test.shape[0], 1)), X_test))
+        m, n = X_test.shape
         result = []
 
-        for index in range(len(X_test)):
+        for index in range(m):
             data = X_test[index,:]
             prob = np.dot(self.w, data.T)
             pred = np.argmax(prob)

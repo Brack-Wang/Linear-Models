@@ -28,14 +28,18 @@ class Logistic:
         Returns:
             the sigmoid of the input
         """
-        # TODO: implement me
-        return 1 / (1 + np.exp(-z))
+        z_list = []
+        for i in range(len(z)):
+            if z[i] < 0:
+                z_list.append(np.exp(z[i]) / (1 + np.exp(z[i])))
+            else:
+                z_list.append(1 / (1 + np.exp(-z[i])))
+        return np.array(z_list)
     
     def gradients_decent(self, X_train, y_train, y_pred):
-        db = np.mean(y_pred - y_train)
         dw = np.matmul(X_train.transpose(), y_pred - y_train)
         dw = np.array([np.mean(grad) for grad in dw])
-        return dw, db
+        return dw
 
     def train(self, X_train: np.ndarray, y_train: np.ndarray):
         """Train the classifier.
@@ -48,14 +52,23 @@ class Logistic:
             y_train: a numpy array of shape (N,) containing training labels
         """
         # TODO: implement me
+        X_train = np.hstack((np.ones((X_train.shape[0], 1)), X_train))
         self.w = np.zeros(X_train.shape[1])
+        m, n = X_train.shape
 
-        for i in range(self.epochs):
-            x_w = np.matmul(self.w, X_train.transpose()) + self.b
-            pred = self.sigmoid(x_w)
-            dw, db = self.gradients_decent(X_train, y_train, pred)
-            self.w = self.w - self.lr * dw
-            self.b = self.b - self.lr * db
+        for epoch in range(self.epochs):
+            for index in range(m):
+                label = y_train[index]
+                data = X_train[index, :]
+                w_yi = self.w[label, :]
+                wyi_xi =  - label * np.dot(w_yi, data.T)
+                self.w += self.lr * dw
+            # x_w = np.matmul(self.w, X_train.transpose()) + self.b
+            # pred = self.sigmoid(x_w)
+            # dw, db = self.gradients_decent(X_train, y_train, pred)
+            # dw = np.matmul(X_train.transpose(), pred - y_train)
+            # dw = np.array([np.mean(grad) for grad in dw])
+            # self.w = self.w - self.lr * dw
         pass
 
     def predict(self, X_test: np.ndarray) -> np.ndarray:
@@ -71,5 +84,6 @@ class Logistic:
                 class.
         """
         # TODO: implement me
+        
         prob = self.sigmoid(np.matmul(X_test, self.w.transpose()) + self.b)
         return [1 if p > 0.5 else 0 for p in prob]

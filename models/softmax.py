@@ -18,7 +18,7 @@ class Softmax:
         self.epochs = epochs
         self.reg_const = reg_const
         self.n_class = n_class
-        self.batch_size = 50
+        self.batch_size = 5000
         self.temperature = 1
 
     def calc_gradient(self, X_train: np.ndarray, y_train: np.ndarray) -> np.ndarray:
@@ -63,12 +63,13 @@ class Softmax:
             y_train: a numpy array of shape (N,) containing training labels
         """
         # TODO: implement me
+        X_train = np.hstack((np.ones((X_train.shape[0], 1)), X_train))
         m, n = X_train.shape
         self.w = np.random.random((self.n_class, X_train.shape[1]))
 
         for epoch in range(self.epochs):
             if epoch % 2 == 0:
-                self.lr /= 4
+                self.lr /= 20
             for i in range((m-1)//self.batch_size + 1):
                 start = i * self.batch_size
                 end = start + self.batch_size
@@ -92,6 +93,7 @@ class Softmax:
                 class.
         """
         # TODO: implement me
+        X_test = np.hstack((np.ones((X_test.shape[0], 1)), X_test))
         result = []
 
         for index in range(len(X_test)):
