@@ -1,9 +1,7 @@
 """Logistic regression model."""
 
 import numpy as np
-import copy
-from sklearn.metrics import accuracy_score
-import math
+
 
 class Logistic:
     def __init__(self, lr: float, epochs: int, threshold: float):
@@ -17,7 +15,7 @@ class Logistic:
         self.lr = lr
         self.epochs = epochs
         self.threshold = threshold
-        self.b = 0
+        self.avoid_zero = 1e-10
 
     def sigmoid(self, z: np.ndarray) -> np.ndarray:
         """Sigmoid function.
@@ -28,18 +26,14 @@ class Logistic:
         Returns:
             the sigmoid of the input
         """
-        z_list = []
-        for i in range(len(z)):
-            if z[i] < 0:
-                z_list.append(np.exp(z[i]) / (1 + np.exp(z[i])))
-            else:
-                z_list.append(1 / (1 + np.exp(-z[i])))
-        return np.array(z_list)
-    
-    def gradients_decent(self, X_train, y_train, y_pred):
-        dw = np.matmul(X_train.transpose(), y_pred - y_train)
-        dw = np.array([np.mean(grad) for grad in dw])
-        return dw
+        # TODO: implement me
+        result = 1 / (1 + np.exp(-z))
+        return result
+
+    def compute_loss(self, pred, y_train):
+        loss_list = y_train * np.log(pred + self.avoid_zero) + (1-y_train) * np.log(1 - pred + self.avoid_zero)
+        return -np.mean(loss_list)
+
 
     def train(self, X_train: np.ndarray, y_train: np.ndarray):
         """Train the classifier.
@@ -52,23 +46,18 @@ class Logistic:
             y_train: a numpy array of shape (N,) containing training labels
         """
         # TODO: implement me
-        X_train = np.hstack((np.ones((X_train.shape[0], 1)), X_train))
-        self.w = np.zeros(X_train.shape[1])
+        X_train = np.hstack((X_train, np.ones((X_train.shape[0], 1))))
         m, n = X_train.shape
+        self.w = np.zeros(n)
+        epoch = 0
+        loss = 100000
 
-        for epoch in range(self.epochs):
-            for index in range(m):
-                label = y_train[index]
-                data = X_train[index, :]
-                w_yi = self.w[label, :]
-                wyi_xi =  - label * np.dot(w_yi, data.T)
-                self.w += self.lr * dw
-            # x_w = np.matmul(self.w, X_train.transpose()) + self.b
-            # pred = self.sigmoid(x_w)
-            # dw, db = self.gradients_decent(X_train, y_train, pred)
-            # dw = np.matmul(X_train.transpose(), pred - y_train)
-            # dw = np.array([np.mean(grad) for grad in dw])
-            # self.w = self.w - self.lr * dw
+        while loss > self.threshold and epoch < self.epochs :
+            pred = self.sigmoid(np.dot(self.w, X_train.T) )
+            gradient = np.dot(X_train.T, pred - y_train) /m
+            self.w = self.w - self.lr * gradient
+            loss = self.compute_loss(y_train, pred)
+            epoch += 1
         pass
 
     def predict(self, X_test: np.ndarray) -> np.ndarray:
@@ -84,6 +73,12 @@ class Logistic:
                 class.
         """
         # TODO: implement me
-        
-        prob = self.sigmoid(np.matmul(X_test, self.w.transpose()) + self.b)
-        return [1 if p > 0.5 else 0 for p in prob]
+        X_test = np.hstack((X_test, np.ones((X_test.shape[0], 1))))
+        result = []
+        for index in range(len(X_test)):
+            data = X_test[index,:]
+            prob = np.dot(self.w, data.T)
+            pred = np.round(self.sigmoid(prob))
+            result.append(pred)
+        return np.array(result)
+

@@ -4,7 +4,7 @@ import numpy as np
 
 
 class Softmax:
-    def __init__(self, n_class: int, lr: float, epochs: int, reg_const: float):
+    def __init__(self, n_class: int, lr: float, epochs: int, reg_const: float, batch: int):
         """Initialize a new classifier.
 
         Parameters:
@@ -18,7 +18,7 @@ class Softmax:
         self.epochs = epochs
         self.reg_const = reg_const
         self.n_class = n_class
-        self.batch_size = 5000
+        self.batch_size = batch
         self.temperature = 1
 
     def calc_gradient(self, X_train: np.ndarray, y_train: np.ndarray) -> np.ndarray:
@@ -38,6 +38,7 @@ class Softmax:
         """
         # TODO: implement me
         m, n = X_train.shape
+        dw = np.zeros_like(self.w)
         for index in range(m):
             label = y_train[index]
             data = X_train[index, :]
@@ -47,10 +48,12 @@ class Softmax:
             pred = pred / np.sum(pred)
             for class_index in range(self.n_class):
                 if class_index == label:
-                    self.w[label, :] += self.lr * (1 - pred[label]) * data
+                    dw[label] += (1 - pred[label]) * data
                 else:
-                    self.w[class_index, :] -= self.lr * pred[class_index] *data
-        return self.w
+                    dw[class_index] -= pred[class_index] * data
+        dw /= m
+        wc = self.w + self.lr * dw
+        return wc
 
     def train(self, X_train: np.ndarray, y_train: np.ndarray):
         """Train the classifier.
@@ -63,13 +66,15 @@ class Softmax:
             y_train: a numpy array of shape (N,) containing training labels
         """
         # TODO: implement me
-        X_train = np.hstack((np.ones((X_train.shape[0], 1)), X_train))
+        X_train = np.hstack((X_train, np.ones((X_train.shape[0], 1))))
         m, n = X_train.shape
         self.w = np.random.random((self.n_class, X_train.shape[1]))
 
         for epoch in range(self.epochs):
-            if epoch % 2 == 0:
-                self.lr /= 20
+            if self.lr > 0.000002:
+                if epoch % 1 == 0:
+                    self.lr /= 10
+            
             for i in range((m-1)//self.batch_size + 1):
                 start = i * self.batch_size
                 end = start + self.batch_size
@@ -77,7 +82,8 @@ class Softmax:
                     end = m
                 X = X_train[start : end]
                 y = y_train[start : end]
-                self.w = self.calc_gradient(X, y)
+                wc = self.calc_gradient(X, y)
+                self.w = (1 - self.lr * self.reg_const / m) * wc
         return
 
     def predict(self, X_test: np.ndarray) -> np.ndarray:
@@ -93,7 +99,7 @@ class Softmax:
                 class.
         """
         # TODO: implement me
-        X_test = np.hstack((np.ones((X_test.shape[0], 1)), X_test))
+        X_test = np.hstack((X_test, np.ones((X_test.shape[0], 1))))
         result = []
 
         for index in range(len(X_test)):

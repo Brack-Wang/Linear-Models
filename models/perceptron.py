@@ -29,9 +29,8 @@ class Perceptron:
             y_train: a numpy array of shape (N,) containing training labels
         """
         # TODO: implement me
-        X_train = np.hstack((np.ones((X_train.shape[0], 1)), X_train))
+        X_train = np.hstack((X_train, np.ones((X_train.shape[0], 1))))
         self.w = np.random.random((self.n_class, X_train.shape[1]))
-
         for epoch in range(self.epochs):
             if epoch % 2 == 0:
                 self.lr /= 10
@@ -47,15 +46,6 @@ class Perceptron:
                         if wc_xi > wyi_xi:
                             self.w[label,:] = self.w[label,:] + self.lr * data
                             self.w[class_index, :] = self.w[class_index, :] - self.lr *data
-        
-        # for epoch in range(self.epochs):
-        #     pred = np.dot(self.w, X_train.T)
-        #     for index in range(len(X_train)):
-        #         pred_label= np.argmax(pred[:, index])
-        #         train_label = y_train[index]
-        #         if pred_label!=train_label:
-        #             self.w[:, :] -=  self.lr * X_train[index, :]
-        #             self.w[train_label, :] +=  2* self.lr * X_train[index, :]
         pass
 
     def predict(self, X_test: np.ndarray) -> np.ndarray:
@@ -71,10 +61,9 @@ class Perceptron:
                 class.
         """
         # TODO: implement me
-        X_test = np.hstack((np.ones((X_test.shape[0], 1)), X_test))
+        X_test = np.hstack((X_test, np.ones((X_test.shape[0], 1))))
         m, n = X_test.shape
         result = []
-
         for index in range(m):
             data = X_test[index,:]
             prob = np.dot(self.w, data.T)

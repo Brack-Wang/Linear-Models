@@ -65,12 +65,10 @@ def get_FASHION_data(
     Returns:
         the train/val/test data and labels
     """
-
     # Load the raw FASHION data
     X_train, y_train = load_mnist('fashion-mnist', kind='train')
     X_test, y_test = load_mnist('fashion-mnist', kind='t10k')
     # Subsample the data
-    # Split train, valide, test dataset
     mask = list(range(num_training, num_training + num_validation))
     X_val = X_train[mask].astype(float)
     y_val = y_train[mask]
@@ -110,7 +108,6 @@ def get_RICE_data() -> dict:
         the train/val/test data and labels
     """
     df = pd.read_csv('./rice/riceClassification.csv')
-    #  [:,:-1] data itself, [:, -1] label
     X=np.array(df.iloc[:,:-1])
     y=np.array(df.iloc[:,-1])
 

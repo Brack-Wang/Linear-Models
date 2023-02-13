@@ -4,7 +4,7 @@ import numpy as np
 
 
 class SVM:
-    def __init__(self, n_class: int, lr: float, epochs: int, reg_const: float):
+    def __init__(self, n_class: int, lr: float, epochs: int, reg_const: float, batch: int):
         """Initialize a new classifier.
 
         Parameters:
@@ -18,7 +18,7 @@ class SVM:
         self.epochs = epochs
         self.reg_const = reg_const
         self.n_class = n_class
-        self.batch_size = 5000
+        self.batch_size = batch
 
     def calc_gradient(self, X_train: np.ndarray, y_train: np.ndarray) -> np.ndarray:
         """Calculate gradient of the svm hinge loss.
@@ -38,6 +38,7 @@ class SVM:
         """
         # TODO: implement me
         m, n = X_train.shape
+        dw = np.zeros_like(self.w)
         for index in range(m):
             label = y_train[index]
             data = X_train[index, :]
@@ -48,10 +49,11 @@ class SVM:
                     w_c = self.w[class_index, :]
                     wc_xi = np.dot(w_c, data.T)
                     if wc_xi > wyi_xi + 1:
-                        self.w[label,:] = self.w[label,:] + self.lr * data
-                        self.w[class_index, :] = self.w[class_index, :] - self.lr *data
-            self.w[class_index, :] = 1 - self.lr * self.reg_const/m * self.w[class_index, :] 
-        return self.w
+                        dw[label] += data
+                        dw[class_index] -= data
+        dw /= m
+        wc = self.w + self.lr * dw
+        return wc
 
     def train(self, X_train: np.ndarray, y_train: np.ndarray):
         """Train the classifier.
@@ -64,13 +66,12 @@ class SVM:
             y_train: a numpy array of shape (N,) containing training labels
         """
         # TODO: implement me
-        X_train = np.hstack((np.ones((X_train.shape[0], 1)), X_train))
+        X_train = np.hstack((X_train, np.ones((X_train.shape[0], 1))))
         m, n = X_train.shape
         self.w = np.random.random((self.n_class, X_train.shape[1]))
-
         for epoch in range(self.epochs):
-            if epoch % 2 == 0:
-                self.lr /= 20
+            if epoch % 1 == 0:
+                self.lr /= 10
             for i in range((m-1)//self.batch_size + 1):
                 start = i * self.batch_size
                 end = start + self.batch_size
@@ -78,7 +79,8 @@ class SVM:
                     end = m
                 X = X_train[start : end]
                 y = y_train[start : end]
-                self.w = self.calc_gradient(X, y)
+                wc = self.calc_gradient(X, y)
+                self.w = (1 - self.lr * self.reg_const / m) * wc
         return
 
     def predict(self, X_test: np.ndarray) -> np.ndarray:
@@ -94,7 +96,7 @@ class SVM:
                 class.
         """
         # TODO: implement me
-        X_test = np.hstack((np.ones((X_test.shape[0], 1)), X_test))
+        X_test = np.hstack((X_test, np.ones((X_test.shape[0], 1))))
         result = []
 
         for index in range(len(X_test)):
